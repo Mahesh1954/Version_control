@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Website v0.3</title>
+    <title>My Website v0.4</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #e0e0e0;
             text-align: center;
             padding: 50px;
+            transition: background-color 0.5s ease; /* Smooth color change */
         }
         .container {
             background: white;
@@ -17,42 +18,44 @@
             display: inline-block;
             max-width: 600px;
         }
-        h1 {
-            color: #2c3e50;
-        }
+        h1 { color: #2c3e50; }
         .version-badge {
-            background-color: #28a745; /* Green for v0.3 */
+            background-color: #007bff; /* Blue for v0.4 */
             color: white;
             padding: 5px 10px;
             border-radius: 5px;
             font-weight: bold;
         }
-        ul {
-            text-align: left;
-            margin: 20px auto;
-            width: 200px;
+        button {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
         }
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
+        button:hover { background-color: #34495e; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>My First Website</h1>
-        <p class="version-badge">Version 0.3</p>
+        <p class="version-badge">Version 0.4</p>
         
-        <p>Features implemented:</p>
-        <ul>
-            <li>HTML Structure</li>
-            <li>CSS Styling</li>
-            <li>Centered Layout</li>
-        </ul>
+        <p>New Feature: JavaScript Interaction!</p>
 
-        <p>Check the source code on <a href="#">GitHub</a>.</p>
+        <button onclick="changeBackground()">Change Background Color</button>
     </div>
+
+    <script>
+        function changeBackground() {
+            const randomColor = Math.floor(Math.random()*16777215).toString(16);
+            document.body.style.backgroundColor = "#" + randomColor;
+        }
+    </script>
 
 </body>
 </html>
