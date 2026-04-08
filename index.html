@@ -1,61 +1,388 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Website v0.4</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #e0e0e0;
-            text-align: center;
-            padding: 50px;
-            transition: background-color 0.5s ease; /* Smooth color change */
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #202123; }
+        ::-webkit-scrollbar-thumb { background: #4d4d4f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5f5f61; }
+        
+        /* Markdown Content Styles */
+        .markdown-content p { margin-bottom: 1rem; line-height: 1.6; }
+        .markdown-content pre { position: relative; margin: 1rem 0; border-radius: 0.5rem; background: 
+#1e1e1e; }
+        .markdown-content code { font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .markdown-content pre code { display: block; padding: 1rem; overflow-x: auto; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .markdown-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .markdown-content blockquote { border-left: 4px solid #4b5563; padding-left: 1rem; color: #9ca3af; 
+margin: 1rem 0; }
+        
+        /* Copy Button */
+        .copy-btn { 
+            position: absolute; top: 0.5rem; right: 0.5rem; 
+            background: #374151; color: white; border: none; 
+            padding: 0.25rem 0.75rem; border-radius: 0.25rem; 
+            font-size: 0.75rem; cursor: pointer; opacity: 0; transition: opacity 0.2s;
         }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            display: inline-block;
-            max-width: 600px;
-        }
-        h1 { color: #2c3e50; }
-        .version-badge {
-            background-color: #007bff; /* Blue for v0.4 */
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        button {
-            background-color: #2c3e50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        button:hover { background-color: #34495e; }
+        .markdown-content pre:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { background: #4b5563; }
+        
+        /* Animations */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .typing-dot { animation: pulse 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        /* Auto-resize textarea */
+        textarea { resize: none; overflow: hidden; }
     </style>
 </head>
-<body>
+<body class="bg-[#343541] text-gray-100 h-screen overflow-hidden flex">
 
-    <div class="container">
-        <h1>My First Website</h1>
-        <p class="version-badge">Version 0.4</p>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-[#202123] flex flex-col border-r border-gray-700 transition-all duration-300 -translate-x-full md:translate-x-0 absolute md:relative z-20 h-full">
+        <div class="p-3">
+            <button onclick="newChat()" class="flex items-center gap-3 w-full border border-gray-600 rounded-lg px-4 py-3 hover:bg-gray-700 transition-colors text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                New chat
+            </button>
+        </div>
         
-        <p>New Feature: JavaScript Interaction!</p>
+        <div class="flex-1 overflow-y-auto px-3 space-y-2" id="chat-history">
+            <!-- Chat history items injected here -->
+        </div>
+        
+        <div class="p-3 border-t border-gray-700">
+            <div class="flex items-center gap-3 px-3 py-2 hover:bg-gray-700 rounded-lg cursor-pointer text-sm">
+                <div class="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-xs font-bold">U</div>
+                <span>User Account</span>
+            </div>
+        </div>
+    </aside>
 
-        <button onclick="changeBackground()">Change Background Color</button>
-    </div>
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative w-full">
+        <!-- Mobile Header -->
+        <div class="md:hidden bg-[#343541] border-b border-gray-700 p-3 flex items-center gap-3">
+            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-700 rounded-lg">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+            <span class="font-semibold">ChatGPT Clone</span>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="chat-container" class="flex-1 overflow-y-auto pb-32">
+            <!-- Welcome Screen -->
+            <div id="welcome-screen" class="flex flex-col items-center justify-center h-full text-center px-4">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/20">
+                    <i data-lucide="bot" class="w-8 h-8 text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold mb-2">How can I help you today?</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 max-w-2xl w-full">
+                    <button onclick="setInput('Explain quantum computing in simple terms')" class="p-4 bg-[#40414f] hover:bg-[#4a4b59] rounded-lg text-left text-sm transition-colors border border-gray-600">
+                        "Explain quantum computing in simple terms"
+                    </button>
+                    <button onclick="setInput('Write a Python function to calculate fibonacci')" class="p-4 bg-[#40414f] hover:bg-[#4a4b59] rounded-lg text-left text-sm transition-colors border border-gray-600">
+                        "Write a Python function to calculate fibonacci"
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div id="messages" class="hidden max-w-3xl mx-auto w-full"></div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#343541] via-[#343541] to-transparent pb-6 pt-10 px-4">
+            <div class="max-w-3xl mx-auto relative">
+                <div class="bg-[#40414f] rounded-2xl shadow-lg border border-gray-600 flex items-end p-3">
+                    <textarea 
+                        id="user-input" 
+                        rows="1" 
+                        placeholder="Message..." 
+                        class="w-full bg-transparent border-0 focus:ring-0 text-white placeholder-gray-400 
+max-h-48 py-2 px-2"
+                        oninput="autoResize(this)"
+                        onkeydown="handleKeyDown(event)"
+                    ></textarea>
+                    <button onclick="sendMessage()" id="send-btn" class="p-2 rounded-lg bg-[#19c37d] text-white hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity mb-1">
+                        <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-center text-gray-500 mt-2">AI can make mistakes. Check important info.</p>
+            </div>
+        </div>
+    </main>
 
     <script>
-        function changeBackground() {
-            const randomColor = Math.floor(Math.random()*16777215).toString(16);
-            document.body.style.backgroundColor = "#" + randomColor;
-        }
-    </script>
+        // State
+        let currentChatId = Date.now().toString();
+        let chats = { [currentChatId]: { title: 'New chat', messages: [] } };
+        let isGenerating = false;
 
+        // Initialize
+        lucide.createIcons();
+        const userInput = document.getElementById('user-input');
+        const messagesDiv = document.getElementById('messages');
+        const welcomeScreen = document.getElementById('welcome-screen');
+
+        // Auto-resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        // Keyboard shortcuts
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function setInput(text) {
+            userInput.value = text;
+            autoResize(userInput);
+            userInput.focus();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function newChat() {
+            currentChatId = Date.now().toString();
+            chats[currentChatId] = { title: 'New chat', messages: [] };
+            renderChatHistory();
+            clearMessages();
+            welcomeScreen.classList.remove('hidden');
+            messagesDiv.classList.add('hidden');
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        function clearMessages() {
+            messagesDiv.innerHTML = '';
+        }
+
+        function renderChatHistory() {
+            const historyDiv = document.getElementById('chat-history');
+            historyDiv.innerHTML = '';
+            
+            Object.entries(chats).reverse().forEach(([id, chat]) => {
+                const div = document.createElement('div');
+                div.className = `flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer text-sm 
+truncate ${id === currentChatId ? 'bg-[#40414f]' : 'hover:bg-[#2d2d30]'}`;
+                div.onclick = () => loadChat(id);
+                div.innerHTML = `<i data-lucide="message-square" class="w-4 h-4 shrink-0"></i> <span 
+class="truncate">${chat.title}</span>`;
+                historyDiv.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function loadChat(id) {
+            currentChatId = id;
+            renderChatHistory();
+            clearMessages();
+            
+            const chat = chats[id];
+            if (chat.messages.length > 0) {
+                welcomeScreen.classList.add('hidden');
+                messagesDiv.classList.remove('hidden');
+                chat.messages.forEach(msg => appendMessage(msg.role, msg.content, false));
+            } else {
+                welcomeScreen.classList.remove('hidden');
+                messagesDiv.classList.add('hidden');
+            }
+        }
+
+        function appendMessage(role, content, animate = false) {
+            if (welcomeScreen.classList.contains('hidden') === false) {
+                welcomeScreen.classList.add('hidden');
+                messagesDiv.classList.remove('hidden');
+            }
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'py-6 px-4 border-b border-gray-700/50';
+            
+            if (role === 'user') {
+                msgDiv.innerHTML = `
+                    <div class="max-w-3xl mx-auto flex gap-4">
+                        <div class="w-8 h-8 rounded-full bg-[#543654] flex items-center justify-center shrink-0 font-bold text-xs">U</div>
+                        <div class="flex-1 text-gray-100">${escapeHtml(content)}</div>
+                    </div>
+                `;
+            } else {
+                msgDiv.innerHTML = `
+                    <div class="max-w-3xl mx-auto flex gap-4">
+                        <div class="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div class="flex-1 markdown-content text-gray-100">${marked.parse(content)}</div>
+                    </div>
+                `;
+            }
+            
+            messagesDiv.appendChild(msgDiv);
+            
+            // Add copy buttons to code blocks
+            msgDiv.querySelectorAll('pre').forEach(pre => {
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.innerHTML = '<span>Copy</span>';
+                btn.onclick = function() {
+                    const code = pre.querySelector('code').textContent;
+                    navigator.clipboard.writeText(code);
+                    btn.innerHTML = '<span>Copied!</span>';
+                    setTimeout(() => btn.innerHTML = '<span>Copy</span>', 2000);
+                };
+                pre.appendChild(btn);
+            });
+            
+            // Highlight code
+            msgDiv.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+            
+            lucide.createIcons();
+            scrollToBottom();
+            
+            return msgDiv;
+        }
+
+        function showTypingIndicator() {
+            const div = document.createElement('div');
+            div.id = 'typing-indicator';
+            div.className = 'py-6 px-4 border-b border-gray-700/50';
+            div.innerHTML = `
+                <div class="max-w-3xl mx-auto flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(div);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text || isGenerating) return;
+
+            // Add user message
+            appendMessage('user', text);
+            chats[currentChatId].messages.push({ role: 'user', content: text });
+            
+            // Update chat title based on first message
+            if (chats[currentChatId].messages.length === 1) {
+                chats[currentChatId].title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
+                renderChatHistory();
+            }
+
+            // Clear input
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            userInput.disabled = true;
+            document.getElementById('send-btn').disabled = true;
+            isGenerating = true;
+
+            // Show typing
+            showTypingIndicator();
+
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            removeTypingIndicator();
+
+            // Mock response (replace with real OpenAI API call)
+            const response = generateMockResponse(text);
+            
+            // Stream effect
+            const assistantDiv = appendMessage('assistant', '');
+            const contentDiv = assistantDiv.querySelector('.markdown-content');
+            contentDiv.innerHTML = '';
+            
+            let fullResponse = '';
+            const words = response.split(' ');
+            
+            for (let i = 0; i < words.length; i++) {
+                fullResponse += words[i] + ' ';
+                if (i % 3 === 0 || i === words.length - 1) {
+                    contentDiv.innerHTML = marked.parse(fullResponse);
+                    scrollToBottom();
+                    await new Promise(resolve => setTimeout(resolve, 30));
+                }
+            }
+            
+            // Final render with code highlighting
+            contentDiv.innerHTML = marked.parse(fullResponse);
+            contentDiv.querySelectorAll('pre').forEach(pre => {
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.innerHTML = '<span>Copy</span>';
+                btn.onclick = function() {
+                    const code = pre.querySelector('code').textContent;
+                    navigator.clipboard.writeText(code);
+                    btn.innerHTML = '<span>Copied!</span>';
+                    setTimeout(() => btn.innerHTML = '<span>Copy</span>', 2000);
+                };
+                pre.appendChild(btn);
+            });
+            contentDiv.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+
+            chats[currentChatId].messages.push({ role: 'assistant', content: fullResponse });
+            
+            userInput.disabled = false;
+            document.getElementById('send-btn').disabled = false;
+            userInput.focus();
+            isGenerating = false;
+        }
+
+function generateMockResponse(input) {
+    if (input.toLowerCase().includes('code') || input.toLowerCase().includes('python')) {
+        return "Here's a Python function to calculate the Fibonacci sequence:\n\n```python\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\n# Example usage\nfor i in range(10):\n    print(f\"F({i}) = {fibonacci(i)}\")\n```\n\nThis uses a **recursive approach**. For production code, consider using memoization or an iterative solution for better performance.";
+    }
+    return "This is a simulated response. In a real implementation, you would replace this with an actual API call to OpenAI's GPT-4 or similar LLM.\n\nTo integrate:\n1. Create a backend endpoint (Node.js/Python)\n2. Use the OpenAI SDK with your API key\n3. Stream the response using Server-Sent Events (SSE)\n4. Update the UI progressively as chunks arrive\n\n**Features in this template:**\n- Markdown rendering\n- Code syntax highlighting\n- Copy-to-clipboard buttons\n- Auto-resizing input\n- Chat history sidebar";
+}
+
+        // Initial render
+        renderChatHistory();
+    </script>
 </body>
 </html>
