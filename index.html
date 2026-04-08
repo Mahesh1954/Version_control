@@ -1,30 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Website v0.2</title>
+    <title>My Website v0.3</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e0e0e0;
             text-align: center;
-            padding: 20px;
+            padding: 50px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            display: inline-block;
+            max-width: 600px;
         }
         h1 {
-            color: #333;
+            color: #2c3e50;
         }
         .version-badge {
-            background-color: #007bff;
+            background-color: #28a745; /* Green for v0.3 */
             color: white;
             padding: 5px 10px;
             border-radius: 5px;
+            font-weight: bold;
+        }
+        ul {
+            text-align: left;
+            margin: 20px auto;
+            width: 200px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
 
-    <h1>My First Website</h1>
-    <p class="version-badge">Version 0.2</p>
-    <p>We have added some style and a badge!</p>
+    <div class="container">
+        <h1>My First Website</h1>
+        <p class="version-badge">Version 0.3</p>
+        
+        <p>Features implemented:</p>
+        <ul>
+            <li>HTML Structure</li>
+            <li>CSS Styling</li>
+            <li>Centered Layout</li>
+        </ul>
+
+        <p>Check the source code on <a href="#">GitHub</a>.</p>
+    </div>
 
 </body>
 </html>
